@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Directory</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="book-form">
+      <h2>Add Book</h2>
+      <hr><br>
+      <form id="add-book-form">
+        <div>
+          <label for="title">Title:</label>
+          <input type="text" id="title" required />
+        </div>
+        <div>
+          <label for="author">Author:</label>
+          <input type="text" id="author" required />
+        </div>
+        <div>
+          <label for="description">description:</label>
+          <input type="text" id="description" required />
+        </div>
+        <div>
+          <label for="price">Price:</label>
+          <input type="number" id="price" required />
+        </div>
+        <button type="submit">Add Book</button>
+      </form>
+    </div>
+    <div id="book-list">
+      <h2>Book List</h2>
+      <hr><br>
+      <ul id="list"></ul>
+    </div>
+
+    <script>
+        const bookList = document.getElementById('list');
+        const addBookForm = document.getElementById('add-book-form');
+      
+        // Function to display all books
+        function displayBooks(books) {
+          bookList.innerHTML = '';
+      
+          books.forEach((book) => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+              <div>
+                <strong>Title:</strong> ${book.title}
+              </div>
+              <div>
+                <strong>Author:</strong> ${book.author}
+              </div>
+              <div>
+                <strong>Description:</strong> ${book.description}
+              </div>
+              <div>
+                <strong>Price:</strong> ${book.price}
+              </div>
+              <div class="actions">
+                <button onclick="deleteBook('${book._id}')">Delete</button>
+              </div>
+            `;
+      
+            bookList.appendChild(listItem);
+          });
+        }
+      
+        // Function to add a book
+        async function addBook(event) {
+          event.preventDefault();
+      
+          const title = document.getElementById('title').value;
+          const author = document.getElementById('author').value;
+          const description = document.getElementById('description').value;
+          const price = document.getElementById('price').value;
+      
+          const response = await fetch('/books', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title, author, description, price }),
+          });
+      
+          if (response.ok) {
+            const book = await response.json();
+            displayBooks([book]);
+            addBookForm.reset();
+      
+            // Fetch all books again to update the book list
+            fetchBooks();
+          } else {
+            console.error('Error adding book');
+          }
+        }
+      
+        // Function to delete a book
+        async function deleteBook(bookId) {
+          const response = await fetch(`/books/${bookId}`, {
+            method: 'DELETE',
+          });
+      
+          if (response.ok) {
+            const listItem = document.querySelector(`li[data-bookid="${bookId}"]`);
+            if (listItem) {
+              listItem.remove();
+            }
+      
+            // Fetch all books again to update the book list
+            fetchBooks();
+          } else {
+            console.error('Error deleting book');
+          }
+        }
+      
+        // Fetch all books
+        async function fetchBooks() {
+          const response = await fetch('/books');
+          if (response.ok) {
+            const books = await response.json();
+            displayBooks(books);
+          } else {
+            console.error('Error fetching books');
+          }
+        }
+      
+        // Event listener for add book form submit
+        addBookForm.addEventListener('submit', addBook);
+      
+        // Fetch all books on page load
+        fetchBooks();
+      </script>
+      
+  </body>
+</html>
